@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import time, json
 
-hostName = "localhost"
+hostName = ""
 hostPort = 9000
 
 sample_result = {
@@ -70,3 +70,6 @@ except KeyboardInterrupt:
 
 serv.server_close()
 print(time.asctime(), "Server Stops - %s:%s" % (hostName, hostPort))
+
+
+
