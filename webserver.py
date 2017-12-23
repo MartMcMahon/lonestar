@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import time, json
+from subprocess import call
 
 hostName = ""
 hostPort = 9000
@@ -27,6 +28,36 @@ sample_result = {
   "sessionAttributes": {}
 }
 
+def ls():
+  return call('ls')
+
+def buildRes():
+  result = {
+    "version": "1.0",
+    "response": {
+      "outputSpeech": {
+        "type": "PlainText",
+        "text": ls()
+      },
+      "card": {
+        "content": "Lonestar program loaded successfully.",
+        "title": "Lonestar LCARS",
+        "type": "Simple"
+      },
+      "reprompt": {
+        "outputSpeech": {
+          "type": "PlainText",
+          "text": ""
+        }
+      },
+      "shouldEndSession": True
+    },
+    "sessionAttributes": {}
+  }
+
+  return result
+
+
 class Server(BaseHTTPRequestHandler):
   def do_HEAD(s):
     s.send_response(200)
@@ -38,7 +69,7 @@ class Server(BaseHTTPRequestHandler):
     self.send_header("Content-type", "text/html")
     self.end_headers()
 
-    self.wfile.write(bytes(json.dumps(sample_result), "utf-8"))
+    self.wfile.write(bytes(json.dumps(buildRes()), "utf-8"))
     #self.wfile.write(bytes("<html><head><title>Title goes here.</title></head>", "utf-8"))
     #self.wfile.write(bytes("<body><p>This is a test.</p>", "utf-8"))
     #self.wfile.write(bytes("<p>You accessed path: %s</p>" % self.path, "utf-8"))
