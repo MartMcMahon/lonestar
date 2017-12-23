@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import time, json
-from subprocess import call
+import subprocess
 
 hostName = ""
 hostPort = 9000
@@ -29,7 +29,7 @@ sample_result = {
 }
 
 def ls():
-  return call('ls')
+  return subprocess.run(['ls', ''], stdout=subprocess.PIPE).stdout.decode('utf-8')
 
 def buildRes():
   result = {
