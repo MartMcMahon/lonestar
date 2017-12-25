@@ -29,7 +29,11 @@ sample_result = {
 }
 
 def ls():
-  return subprocess.run(['ls', ''], stdout=subprocess.PIPE).stdout.decode('utf-8')
+  return ''
+  #return subprocess.run(['ls', ''], stdout=subprocess.PIPE).stdout.decode('utf-8')
+
+def playThaVideo():
+  proc = subprocess.Popen(['omxplayer', '-o', 'hdmi', 'video.mp4'])
 
 def buildRes():
   result = {
