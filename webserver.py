@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import time, json
 import subprocess
+from subprocess import PIPE, STDOUT
 
 hostName = ""
 hostPort = 9000
@@ -33,7 +34,7 @@ def ls():
   #return subprocess.run(['ls', ''], stdout=subprocess.PIPE).stdout.decode('utf-8')
 
 def playThaVideo():
-  proc = subprocess.Popen(['omxplayer', '-o', 'hdmi', 'video.mp4'])
+  proc = subprocess.Popen(['omxplayer', '-o', 'hdmi', 'video.mp4'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
 
 def buildRes():
   result = {
@@ -41,7 +42,7 @@ def buildRes():
     "response": {
       "outputSpeech": {
         "type": "PlainText",
-        "text": ls()
+        "text": "playing the video!"
       },
       "card": {
         "content": "Lonestar program loaded successfully.",
@@ -73,6 +74,8 @@ class Server(BaseHTTPRequestHandler):
     self.send_header("Content-type", "text/html")
     self.end_headers()
 
+    playThaVideo()
+
     self.wfile.write(bytes(json.dumps(buildRes()), "utf-8"))
     #self.wfile.write(bytes("<html><head><title>Title goes here.</title></head>", "utf-8"))
     #self.wfile.write(bytes("<body><p>This is a test.</p>", "utf-8"))
@@ -81,7 +84,7 @@ class Server(BaseHTTPRequestHandler):
 
   def do_POST(self):
     content_len = int(self.headers['content-length'])
-    body = json.loads((self.rfile.read(content_len)).decode("utf-8"))
+    body = json.loads((self.rfile.read(content_len)))#.decode("utf-8"))
     print(body)
 
     self.send_response(200)
