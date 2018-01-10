@@ -1,0 +1,24 @@
+{
+  "movies": {
+    "eternal": "/home/pi/Videos/MOVIES/Eternal.Sunshine.of.the.Spotless.Mind.2004.1080p.BluRay.x264.anoXmous/Eternal.Sunshine.of.the.Spotless.Mind.2004.1080p.BluRay.x264.anoXmous_.mp4"
+  },
+  "tv": {
+    "harmon quest": {
+      "path": "/home/pi/Videos/TV/Harmon Quest/",
+      "3": "HarmonQuest.S02E03.1080p.mp4",
+      "4": "HarmonQuest.S02E04.1080p.mp4",
+      "5": "HarmonQuest.S02E05.Back.to.Sandman.Desert.WEB-DL.x264-RBB.mp4",
+      "6": "HarmonQuest.S02E06.The.Barely.Cursed.Bazaar.of.Commerce.WEB-DL.x264-RBB.mp4"
+    },
+    "curb your enthusiasm": {
+      "path": "/home/pi/Videos/TV/Curb Your Enthusiasm/",
+      "2": {
+        "1": "Curb Your Enthusiasm Season 2 Episode 01 - The Car Salesman.avi",
+        "2": "Curb Your Enthusiasm Season 2 Episode 02 - Thor.avi",
+        "3": "Curb Your Enthusiasm Season 2 Episode 03 - Trick or Treat.avi",
+        "5": "Curb Your Enthusiasm Season 2 Episode 05 - The Thong.avi"
+      },
+      "current_ep": "2.5"
+    }
+  }
+}
