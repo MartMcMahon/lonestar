@@ -12,8 +12,8 @@ tracking = [("801", "5405"),
 ]
 
 class Buses:
-  def __init__(self):
-  	db = MongoClient().bus_data
+	def __init__(self):
+		db = MongoClient().bus_data
 		self.collection = db.trips
 
 	def getTripWithId(self, tripId):
