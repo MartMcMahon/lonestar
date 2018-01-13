@@ -5,7 +5,7 @@ from subprocess import PIPE, STDOUT
 import busstuff
 
 hostName = ""
-hostPort = 443
+hostPort = 80
 
 '''''''''''''''''''''''
 default response data
@@ -290,7 +290,7 @@ class DataHandler():
 #bus = busstuff.Buses()
 
 serv = HTTPServer((hostName, hostPort), Server)
-serv.socket = ssl.wrap_socket(serv.socket, certfile='./fullchain.pem', server_side=True)
+serv.socket = ssl.wrap_socket(serv.socket, certfile='./cert/cert.pem', keyfile='./cert/privkey.pem', server_side=True)
 print(time.asctime(), "Server Starts - %s:%s" % (hostName, hostPort))
 
 dh = DataHandler()
