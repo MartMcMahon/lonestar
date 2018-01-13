@@ -2,7 +2,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import time, json, ssl
 import subprocess
 from subprocess import PIPE, STDOUT
-import busstuff
 
 hostName = ""
 hostPort = 80
@@ -18,14 +17,16 @@ class Server(BaseHTTPRequestHandler):
     self.send_header("Content-type", "text/html")
     self.end_headers()
 
-    self.wfile.write(bytes("<html><body>hello!</body></html>"), "utf-8"))
+    print(self.body)
+    self.wfile.write(bytes("<html><body>hello!</body></html>"), "utf-8")
     
 
-serv = HTTPServer((hostName, hostPort), Server)
-serv.socket = ssl.wrap_socket(serv.socket, certfile='./fullchain.pem', server_side=True)
+#serv = HTTPServer((hostName, hostPort), Server)
+serv = HTTPServer((hostName, hostPort), BaseHTTPRequestHandler)
+serv.socket = ssl.wrap_socket(serv.socket, certfile='./cert/cert.pem', keyfile='./cert/privkey.pem', server_side=True)
 print(time.asctime(), "Server Starts - %s:%s" % (hostName, hostPort))
 
-dh = DataHandler()
+#dh = DataHandler()
 
 try:
   serv.serve_forever()
