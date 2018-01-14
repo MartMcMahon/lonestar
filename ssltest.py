@@ -23,7 +23,7 @@ class Server(BaseHTTPRequestHandler):
 
 #serv = HTTPServer((hostName, hostPort), Server)
 serv = HTTPServer((hostName, hostPort), BaseHTTPRequestHandler)
-serv.socket = ssl.wrap_socket(serv.socket, certfile='./cert/cert.pem', keyfile='./cert/privkey.pem', server_side=True)
+#serv.socket = ssl.wrap_socket(serv.socket, certfile='./cert/cert.pem', keyfile='./cert/privkey.pem', server_side=True)
 print(time.asctime(), "Server Starts - %s:%s" % (hostName, hostPort))
 
 #dh = DataHandler()
