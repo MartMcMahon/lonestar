@@ -15,6 +15,13 @@ class Buses:
 	def __init__(self):
 		db = MongoClient().bus_data
 		self.collection = db.trips
+		self.busCol = db.buses
+		self.updatesCol = db.updates
+
+		#########
+		#self.getTripData()
+		#self.downloadTripUpdates()
+		#self.getTripUpdates()
 
 	def getTripWithId(self, tripId):
 		return self.collection.find_one({'_id': tripId})
@@ -41,17 +48,10 @@ class Buses:
 				self.pushTrip(trip)
 				#print(trip)
 
-	'''
-	def pushTripToJson(self, trip):
-		data = getTripDataFromJson()
-		data[]
-		with open('trips.json')
-	'''
-
 	def getTripsFromJson(self):
 		with open('trips.json', 'r') as file:
 			trips = file.read()
-		return trips      
+		return trips
 
 	def downloadTripUpdates(self):
 		r = requests.get("https://data.texas.gov/download/mqtr-wwpy/text%2Fplain")
@@ -67,25 +67,38 @@ class Buses:
 
 		self.updates = data['entity']
 		for update in self.updates:
+			delayObj = {}
 			trip_id = update['trip_update']['trip']['trip_id']
+			delayObj = {'trip_id':trip_id}
 			trip = self.collection.find_one({'_id':trip_id})
 			if not trip:
 				continue
-			stuff = update['trip_update']['stop_time_update']
+			#stuff = update['trip_update']['stop_time_update']
+			trip_update = update['trip_update']
 			vehicle = update['trip_update']['vehicle']
 
-			if 'updates' not in trip:
-				trip['updates'] = dict()
+			t = trip_update['trip']
 
-			for each in stuff:
-				trip['updates'][each['stop_id']] = each
+			for delay in trip_update['stop_time_update']:
+				updateObj = {'trip_id': t['trip_id'],
+					'start_time': t['start_time'],
+					'start_date': t['start_date'],
+					'route_id': t['route_id'],
+					'timestamp': trip_update['timestamp']}
 
-			trip['vehicle'] = vehicle
-			
-			self.pushTrip(trip)
+				if trip_update['vehicle']:
+					updateObj['vehicle'] = trip_update['vehicle']
 
+				if delay['departure']:
+					updateObj['delay'] = delay['departure']['delay']
+					updateObj['time'] = delay['departure']['time']
+					updateObj['stop_id'] = delay['stop_id']
 
+					#skip saving if this instance already exists
+					if self.updatesCol.find_one({'timestamp': updateObj['timestamp'], 'route_id': updateObj['route_id'], 'stop_id': updateObj['stop_id']}):
+						continue
 
+					self.updatesCol.save(updateObj)
 
 	def getStopTimesFromTxt(self):
 		with open('stop_times.txt') as file:
@@ -118,98 +131,112 @@ class Buses:
 			trip['stops'] = data[t]
 			self.pushTrip(trip)
 
-	def getNextBus(self, data=("7", "1171")):
-		print('bus ' + data[0])
-		print('stop_id ' + data[1])
-		times = []
-		trips = self.collection.find({'route_id':data[0]})
-		'''
-		not sure about this if 'stops' if
-		'''
-		trip_ids = []
+	def getBusDBObj(self, id=0, onTime=True):
+		bus = {'_id': id}
+		return bus
+
+	def getDelay(self, trip_id, stop_id):
+		#change to find_one once ur sure this is working right
+		res = self.updatesCol.find({'trip_id': trip_id, 'stop_id': stop_id})
+
+		if res.count() == 1:
+			return res[0]
+		elif res.count() == 0:
+			return '0'
+		else:
+			# res has more than one result, so return only the one w/ highest timestamp
+			timestamp = 0
+			for update in res:
+				if update['timestamp'] > timestamp:
+					r = update
+					timestamp = update['timestamp']
+
+			return r
+
+	def newgetNextBus(self, data=("7", "1171")):
+		nextBuses = []
+		route_id = data[0]
+		stop_id = data[1]
+		print('bus ' + route_id)
+		print('stop_id' + stop_id)
+		trips = self.collection.find({'route_id':route_id})
+
 		for trip in trips:
 			if 'stops' not in trip:
 				continue
 			stops = trip['stops']
-			if data[1] in stops:
-				times.append(stops[data[1]])
-				trip_ids.append(trip['trip_id'])
-				#print('trip_id: ' + trip['trip_id'])
-		
-		times.sort()
-		#now = " 8:42:00"
-		now = datetime.datetime.now()
+			#make sure the stop is listed here
+			if stop_id not in stops:
+				continue
+			#nextBus = {'route_id':route_id, 'stop_id':stop_id}
+			#(time, trip_id)
+			nextBuses.append((stops[stop_id], trip['trip_id']))
+
+		#get now
+		self.now = now = datetime.datetime.now()
 		now_s = now.__str__()
 
 		#format time string
-		hour = self.formatHour(str(now.hour))
+		hour = now.hour
 		minute = now.minute
 		second = now.second
-		now_s = hour + ':' + str(minute) + ':' + str(second)
+		now_s = str(hour) + ':' + str(minute) + ':' + str(second)
 
-		#find next bus
-		lastBus = ''
-		nextBus = ''
-		for index in range(0, len(times))[::-1]:
-			if now_s < times[index]:
-				nextBus = times[index]
-				print('trip: ' + trip_ids[index])
-			else:
-				lastBus = times[index]
+		#now_s = "19:00:00"
+
+		nextBuses.sort()
+		for c in range(0, len(nextBuses)):
+			if now_s < nextBuses[c][0]:
+				nextBuses = nextBuses[c:]
 				break
 
-		#do time math
-		nextBus_t = self.timeFromStr(nextBus)
-		t = datetime.datetime.combine(datetime.datetime.today(), nextBus_t)
+		newNextBuses = []
+		for bus in nextBuses:
+			delay = self.getDelay(bus[1], stop_id)
+			if not delay:
+				delay = '0'
+			update = (bus[0], bus[1], delay)
+			newNextBuses.append(update)
+		nextBuses = newNextBuses
+
+		return nextBuses
+	
+	def timeUntil(self, time_s):
+		now = self.now
+		#get time obj from string
+		time_t = self.timeFromStr(time_s)
+		#get datetime obj with today for datetime math
+		t = datetime.datetime.combine(datetime.datetime.today(), time_t)
 		delta = t + datetime.timedelta(hours=-now.hour, minutes=-now.minute, seconds=-now.second)
-		
-		print('delta: ' + delta.__str__())
-
-		
-
-
-		print('last bus: ' + lastBus)
-		print('next bus: ' + nextBus)
-
-		return (data[0], nextBus, delta)
+		return delta.minute
 
 	def timeFromStr(self, s):
 		h, m, sec = s.split(':')
 		h = int(h)
+		if h > 23:
+			h -= 24
 		m = int(m)
 		sec = int(sec)
 		return datetime.time(hour=h, minute=m, second=sec)
 
 	def formatHour(self, hour):
-		if hour < "03":
+		if hour < "3":
 			hour = str(int(hour) + 24)
-		elif hour < "10":
-			hour = ' ' + hour[1]
+		#elif hour < "10":
+			#hour = ' ' + hour[1]
 		return hour
-		
 
+if __name__ == "__main__":
+	buses = Buses()
+	#buses.getTripData()
+	#buses.downloadTripUpdates()
+	#buses.getTripData()
+	#buses.getTripUpdates()
+	buses.newgetNextBus()
+	#buses.getStopTimesFromTxt()
+	#buses.getNextSeven()
 
-'''
-FILE = 'bus_data.json'
-with open(FILE) as file:
-	data = json.load(file)
+	busData = {}
+	#for each in tracking:
+		#buses.getNextBus(each)
 
-data = data['entity']
-for e in data:
-	update = dict()
-	update['id'] = e['id']
-	update['route'] = e['trip_update']['trip']['route_id']
-	print(update)
-'''
-
-buses = Buses()
-#buses.getTripData()
-buses.downloadTripUpdates()
-#buses.getTripData()
-buses.getTripUpdates()
-#buses.getStopTimesFromTxt()
-#buses.getNextSeven()
-
-busData = {}
-for each in tracking:
-	buses.getNextBus(each)

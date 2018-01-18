@@ -217,17 +217,32 @@ class Server(BaseHTTPRequestHandler):
 
   def do_GET(self):
     self.send_response(200)
-    self.send_header("Content-type", "text/html")
+    self.send_header("Content-type", "application/json")
     self.end_headers()
 
-    busData = []
+    nextBuses = {}
+    #nextBuses['1'] = bus.newgetNextBus(('1', '3130'))
     for each in busstuff.tracking:
-      busData.append(bus.getNextBus(each))
+      #getNextBus returns (route_id, time, delay)
+      nextBuses[each[0]] = bus.newgetNextBus(each)
+      #busData.append(bus.getNextBus(each))
 
     speech = ""
-    for each in busData:
-      timeStr = str(each[2].minute) + " minutes"
-      speech += str("The next " + each[0] + " bus arrives in " + timeStr + ". ")
+    #print(nextBuses)
+    for each in nextBuses:
+      route_id = each
+      print('route_id' + route_id)
+      update = nextBuses[each][0]
+      #print('update: ' + update)
+      timeStr = update[0]
+      trip_id = update[1]
+      delay = update[2]
+      mins = bus.timeUntil(timeStr).__str__()
+      #timeStr = str(mins) + " minutes"
+      speech += str("The next " + route_id + " bus arrives in " + mins + " minutes. ")
+      speech += str('trip ' + trip_id + '.')
+      if delay != '0':
+        speech += str("With a delay value of " + delay + ". Whatever that means. ")
 
     self.wfile.write(bytes(json.dumps(buildRes(speech)), "utf-8"))
     #self.wfile.write(bytes("<html><head><title>Title goes here.</title></head>", "utf-8"))
@@ -288,9 +303,13 @@ class DataHandler():
         return s['path'] + "Season " + season + "/" + s[season][ep]
 
 bus = busstuff.Buses()
+#bus.downloadTripUpdates()
+#bus.getTripUpdates()
 
 serv = HTTPServer((hostName, hostPort), Server)
-#serv.socket = ssl.wrap_socket(serv.socket, certfile='./cert/cert.pem', keyfile='./cert/privkey.pem', server_side=True)
+#context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+#context.load_cert_chain(certfile='./cert/cert.pem', keyfile='./cert/privkey.pem')
+#serv.socket = context.wrap_socket(serv.socket, server_side=True)
 print(time.asctime(), "Server Starts - %s:%s" % (hostName, hostPort))
 
 dh = DataHandler()
