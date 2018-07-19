@@ -6,5 +6,5 @@ The server keeps all bus data in a database so that it is available as soon as t
 The skill is started by speaking "Alexa, ask lonestar when the next bus comes" and the result is the next arrival of the relevant busses at the stops I hardcoded in.
 
 Another thing the web server can do is run shell commands.
-There is an endpoint for running omxplayer which is the video player I've been using.
+There are plans for an endpoint for running the omxplayer video player.
 I'm currently working on the database of movies and shows I have downloaded so it can use that when I give it parameters.
